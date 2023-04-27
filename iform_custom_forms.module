@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * @file
+ * Adds customisations to the Indicia forms module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\iform_custom_forms\IformCustomFormsList;
+
+
+
+/**
+ * Implements hook_help().
+ */
+function iform_custom_forms_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.iform_custom_forms':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This is an extension for the Indicia Forms module.') . '</p>';
+      return $output;
+    default:
+  }
+}
+
+ /**
+ * Implements hook_library_info_build.
+ *
+ * @return array Libraries to create
+ */
+function iform_custom_forms_library_info_build() {
+  $iformCustomFormsList = \Drupal::service('iform_custom_forms.list');
+  return $iformCustomFormsList->getLibraries();
+}
+
+
+/**
+ * Implements hook_page_attachments().
+ * 
+ * For any page that has Indicia functionality, add all the scripts and CSS that
+ * we require.
+ */
+function iform_custom_forms_page_attachments(array &$attachments) {
+  $node = \Drupal::request()->attributes->get('node');
+  if ($node) {
+    $nid = $node->id();
+    $attachments['#attached']['library'][] = "iform_custom_forms/node_$nid";
+  }
+}

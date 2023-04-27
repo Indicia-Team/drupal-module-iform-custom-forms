@@ -1,0 +1,4 @@
+services:
+  iform_custom_forms.list:
+    class: Drupal\iform_custom_forms\IformCustomFormsList
+    arguments: ['@cache.default', '@extension.list.module', '@entity_type.manager']

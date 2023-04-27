@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * Ensures the Quantity is set correctly.
+ *
+ * The Quantity field is hidden and populated with the sum of the Qty Inside and
+ * Qty Outside when JavaScript is enabled. If JavaScript is disabled we need to
+ * ensure the values add up.
+ */
+function iform_custom_validation($post) {
+  $errors = [];
+
+  $quantities = [];
+  // Loop through the $post array...
+  foreach ($post as $key => $value) {
+    // Looking for the quantity attributes.
+    foreach ([
+      'qty' => 133,
+      'qtyInside' => 897,
+      'qtyOutside' => 898,
+    ] as $attr => $id) {
+      $pos = strpos($key, "occAttr:$id");
+      if ($pos !== FALSE) {
+        // Store them in an array grouped by the initial part of the key.
+        $group = substr($key, 0, $pos);
+        if (!array_key_exists($group, $quantities)) {
+          $quantities[$group] = [];
+        }
+        // Each element of the quantities array is an array like
+        // [
+        //   'qty' => ['key' => $key, 'value' => $value],
+        //   'qtyInside' => ['key' => $key, 'value' => $value],
+        //   'qtyOutside' => ['key' => $key, 'value' => $value],
+        // ]
+        $quantities[$group][$attr] = ['key' => $key, 'value' => $value];
+        // Continue with the next item in the $post array.
+        continue 2;
+      }
+    }
+  }
+
+  // Now check all the quantity arithmetic.
+  foreach ($quantities as $attributes) {
+    $qty = $attributes['qty']['value'];
+    $qtyInside = $attributes['qtyInside']['value'];
+    $qtyOutside = $attributes['qtyOutside']['value'];
+    $expected = NULL;
+    // A value of '' means present and 0 means absent.
+    if ($qtyInside == '') {
+      if ($qtyOutside == '') {
+        $expected = '';
+      }
+      else {
+        $expected = ($qtyOutside == 0) ? '' : $qtyOutside;
+      }
+    }
+    else {
+      if ($qtyOutside == '') {
+        $expected = ($qtyInside == 0) ? '' : $qtyInside;
+      }
+      else {
+        $expected = $qtyInside + $qtyOutside;
+      }
+    }
+    if ($qty != $expected) {
+      $key = $attributes['qty']['key'];
+      // The key for the errors array is
+      // occAttr:<occAttrId>:<occAttrValueId>.
+      $errorKey = 'occAttr:133' . substr($key, strrpos($key, ':'));
+      $errors[$errorKey] = lang::get('Qty must equal Qty Inside + Qty Outside.');
+    }
+  }
+
+  return $errors;
+}

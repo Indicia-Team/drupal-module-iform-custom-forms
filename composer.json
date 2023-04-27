@@ -1,0 +1,7 @@
+{
+    "name": "drupal/iform_custom_forms",
+    "description": "Extends the iForm module with custom forms, scripts, styling and language.",
+    "type": "drupal-module",
+    "license": "GPL-3.0",
+    "require": {}
+}

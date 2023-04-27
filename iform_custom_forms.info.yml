@@ -1,0 +1,10 @@
+name: Indicia form customisations
+description: >
+  Enables extension of the Indicia forms module with custom forms, scripts,  
+  styling, language, and validation.
+package: "Indicia"
+type: module
+version: 1.0.0
+core_version_requirement: ^9.4 || ^10
+dependencies:
+ - iform:iform

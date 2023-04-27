@@ -1,0 +1,10 @@
+name: EBMS
+description: >
+  Cusomisations for the European Butterfly Monitoring Scheme.
+  https://butterfly-monitoring.net
+package: "Indicia form customisations"
+type: module
+version: 1.0.0
+core_version_requirement: ^9.4 || ^10
+dependencies:
+ - iform_custom_forms:iform_custom_forms
