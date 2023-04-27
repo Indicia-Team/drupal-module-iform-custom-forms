@@ -16,42 +16,49 @@ class IformCustomFormsList {
    *
    * @var array
    */
-  protected static $submodules;
+  private static $submodules;
 
   /**
    * A list of iform_custom_forms customisations provided by submosules.
    *
    * @var array
    */
-  protected static $customisations;
+  private static $customisations;
 
   /**
    * A list of asset libraries.
    *
    * @var array
    */
-  protected static $libraries;
+  private static $libraries;
+
+  /**
+   * The absolute path to this module.
+   *
+   * @var string
+   */
+  private static $absoluteModulePath;
 
   /**
    * The injected CacheBackendInterface.
    *
    * @var Drupal\Core\Cache\CacheBackendInterface
    */
-  protected static $cache;
+  private static $cache;
 
   /**
    * The injected ModuleExtensionList.
    *
    * @var Drupal\Core\Extension\ModuleExtensionList
    */
-  protected static $moduleExtensionList;
+  private static $moduleExtensionList;
 
   /**
    * The injected entityTypeManager.
    *
    * @var Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected static $entityTypeManager;
+  private static $entityTypeManager;
 
   /**
    * Constructor.
@@ -64,9 +71,29 @@ class IformCustomFormsList {
     $this->cache = $cache;
     $this->moduleExtensionList = $moduleExtensionList;
     $this->entityTypeManager = $entityTypeManager;
+    $this->createAbsoluteModulePath();
     $this->createSubmodulesList();
     $this->createCustomisationsList();
     $this->createLibrariesList();
+    spl_autoload_register([$this, 'autoloader']);
+
+  }
+
+  /**
+   * Sets the absoluteModulePath property.
+   */
+  protected function createAbsoluteModulePath() {
+    if (!isset(self::$absoluteModulePath)) {
+      $modulePath = $this->moduleExtensionList->getPath('iform_custom_forms');
+      self::$absoluteModulePath = DRUPAL_ROOT . "/$modulePath";
+    }
+  }
+
+  /**
+   * Returns the absolute path of the main module.
+   */
+  public function getAbsoluteModulePath() {
+    return self::$absoluteModulePath;
   }
 
   /**
@@ -120,8 +147,6 @@ class IformCustomFormsList {
       else {
         // Construct the list if not cached.
         self::$customisations = [];
-        $modulePath = $this->moduleExtensionList->getPath('iform_custom_forms');
-        $moduleFullPath = DRUPAL_ROOT . "/$modulePath";
 
         // Get customisations from all enabled submodules.
         foreach (self::$submodules as $submodule) {
@@ -138,7 +163,7 @@ class IformCustomFormsList {
           // Check all possible subdirectories.
           foreach ($subdirs as $subdir) {
             self::$customisations[$subdir] = [];
-            $dir = "$moduleFullPath/modules/$submodule/$subdir";
+            $dir = self::$absoluteModulePath . "/modules/$submodule/$subdir";
             if (is_dir($dir)) {
               $handle = opendir($dir);
               while (FALSE !== ($entry = readdir($handle))) {
@@ -186,15 +211,17 @@ class IformCustomFormsList {
           ->execute();
         $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple($nids);
 
+        $forms = [];
         foreach ($nodes as $node) {
           $nid = $node->id();
           $lib = "node_$nid";
           $form = $node->field_iform->value;
+          $forms[$form][] = $nid;
           $libraries[$lib] = [
             'version' => 'VERSION',
             'js' => [],
             'css' => [
-              'base' => []
+              'base' => [],
             ]
           ];
 
@@ -244,6 +271,28 @@ class IformCustomFormsList {
    */
   public function getLibraries() {
     return self::$libraries;
+  }
+
+  /**
+   * Autoloader for forms in submodules.
+   *
+   * The following naming convention exists for Indicia client_helpers:
+   * a file, "$formName.php", contains a class "iform_$formName".
+   */
+  protected function autoloader($className) {
+    // Check the class is a candidate for an iform custom form.
+    if (substr($className, 0, 6) === 'iform_') {
+      $formName = substr($className, 6);
+      $fileName = "$formName.php";
+      // Check the class file exists in form customisations.
+      if (array_key_exists($fileName, self::$customisations['forms'])) {
+        // Construct the absolute path to the file.
+        $path = self::$absoluteModulePath .
+                '/' . self::$customisations['forms'][$fileName] .
+                '/' . $fileName;
+        require $path;
+      }
+    }
   }
 
 }
