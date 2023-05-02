@@ -151,25 +151,25 @@ class IformCustomFormsList {
         // Get customisations from all enabled submodules.
         foreach (self::$submodules as $submodule) {
           $subdirs = [
+            '.',
             'js',
             'css',
-            'forms',
-            'forms/js',
-            'forms/css',
             'lang',
+            'templates',
             'validation',
           ];
 
           // Check all possible subdirectories.
           foreach ($subdirs as $subdir) {
             self::$customisations[$subdir] = [];
-            $dir = self::$absoluteModulePath . "/modules/$submodule/$subdir";
+            $relPath = "modules/$submodule/customisations/$subdir";
+            $dir = self::$absoluteModulePath . '/' . $relPath;
             if (is_dir($dir)) {
               $handle = opendir($dir);
               while (FALSE !== ($entry = readdir($handle))) {
                 if ($entry != "." && $entry != ".." && !is_dir("$dir/$entry")) {
                   // Store the directory of file relative to main module.
-                  self::$customisations[$subdir][$entry] = "modules/$submodule/$subdir";
+                  self::$customisations[$subdir][$entry] = $relPath;
                 }
               }
               closedir($handle);
@@ -227,30 +227,30 @@ class IformCustomFormsList {
 
           // Prebuilt form specific CSS.
           $file = "$form.css";
-          if (array_key_exists($file, self::$customisations['forms/css'])) {
-            $dir = self::$customisations['forms/css'][$file];
-            $libraries[$lib]['css']['base']["$dir/$file"] = [];
+          if (array_key_exists($file, self::$customisations['css'])) {
+            $relPath= self::$customisations['css'][$file];
+            $libraries[$lib]['css']['base']["$relPath/$file"] = [];
           }
 
           // Node specific CSS.
           $file = "node.$nid.css";
           if (array_key_exists($file, self::$customisations['css'])) {
-            $dir = self::$customisations['css'][$file];
-            $libraries[$lib]['css']['base']["$dir/$file"] = [];
+            $relPath = self::$customisations['css'][$file];
+            $libraries[$lib]['css']['base']["$relPath/$file"] = [];
           }
 
           // Prebuilt form specific JS.
           $file = "$form.js";
-          if (array_key_exists($file, self::$customisations['forms/js'])) {
-            $dir = self::$customisations['forms/js'][$file];
-            $libraries[$lib]['js']["$dir/$file"] = [];
+          if (array_key_exists($file, self::$customisations['js'])) {
+            $relPath = self::$customisations['js'][$file];
+            $libraries[$lib]['js']["$relPath/$file"] = [];
           }
 
           // Node specific JS
           $file = "node.$nid.js";
           if (array_key_exists($file, self::$customisations['js'])) {
-            $dir = self::$customisations['js'][$file];
-            $libraries[$lib]['js']["$dir/$file"] = [];
+            $relPath = self::$customisations['js'][$file];
+            $libraries[$lib]['js']["$relPath/$file"] = [];
           }
 
           // Skip any unnecessary empty libraries.
@@ -285,10 +285,10 @@ class IformCustomFormsList {
       $formName = substr($className, 6);
       $fileName = "$formName.php";
       // Check the class file exists in form customisations.
-      if (array_key_exists($fileName, self::$customisations['forms'])) {
+      if (array_key_exists($fileName, self::$customisations['.'])) {
         // Construct the absolute path to the file.
         $path = self::$absoluteModulePath .
-                '/' . self::$customisations['forms'][$fileName] .
+                '/' . self::$customisations['.'][$fileName] .
                 '/' . $fileName;
         require $path;
       }

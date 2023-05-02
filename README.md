@@ -9,10 +9,11 @@ extra. In order for the iForm module to remain clean and easy to update yet to
 ensure the customisations are held under version control, we have created this 
 module.
 
-For every new project, create a subfolder of the modules folder named
+For every new project, create a subfolder in the modules folder named
 `iform_custom_forms_<project>` where you replace `<project>` with a relevant, 
-unique, project name. Within this folder, you can create subfolders for the 
-different possible types of customisation. E.g.
+unique, project name. Within this folder, create another called `customisations`
+where you can create subfolders for the different possible types of 
+customisation. E.g.
 
 ```
 iform_custom_forms
@@ -21,17 +22,16 @@ iform_custom_forms
    |
    |__ iform_custom_forms_ebms
       |
-      |__ css
-      |__ js
-      |__ lang
-      |__ templates
-      |__ validation
-      |__ forms
+      |__ customisations
          |
-         |_ css
-         |_ js
+         |__ css
+         |__ js
+         |__ lang
+         |__ templates
+         |__ validation
 ```
-You only need to create the folders you will use.
+You only need to create the folders you will use. This replicates the folder
+structure found in iform/client_helpers/prebuilt_forms.
 
 Within your project folder you must also add a file called 
 `iform_custom_forms_<project>.info.yml`. The contents of this file shoud be
