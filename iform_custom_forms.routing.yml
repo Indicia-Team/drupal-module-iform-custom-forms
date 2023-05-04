@@ -1,0 +1,6 @@
+iform_custom_forms.ajaxParams:
+  path: '/iform_custom_forms/params'
+  defaults:
+    _controller: '\Drupal\iform_custom_forms\Controller\IformCustomFormsController::ajaxParams'
+  requirements:
+    _access: 'TRUE'
