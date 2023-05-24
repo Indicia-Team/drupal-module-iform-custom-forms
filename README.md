@@ -25,6 +25,7 @@ iform_custom_forms
       |__ customisations
          |
          |__ css
+         |__ extensions
          |__ js
          |__ lang
          |__ templates
@@ -79,3 +80,6 @@ now you must allow for the relocation by writing
 $helperPath = realpath(iform_client_helpers_path());
 require_once "$helperPath/prebuilt_forms/includes/map.php";
 ```
+
+Whenever you add a new custom file to your site **you must flush all caches** in
+order to rebuild the list of files.

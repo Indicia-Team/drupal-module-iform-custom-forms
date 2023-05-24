@@ -76,7 +76,6 @@ class IformCustomFormsList {
     $this->createCustomisationsList();
     $this->createLibrariesList();
     spl_autoload_register([$this, 'autoloader']);
-
   }
 
   /**
@@ -157,6 +156,7 @@ class IformCustomFormsList {
             'lang',
             'templates',
             'validation',
+            'extensions',
           ];
 
           // Check all possible subdirectories.
@@ -166,6 +166,7 @@ class IformCustomFormsList {
             $dir = self::$absoluteModulePath . '/' . $relPath;
             if (is_dir($dir)) {
               $handle = opendir($dir);
+              // Loop through all the files in the directory.
               while (FALSE !== ($entry = readdir($handle))) {
                 if ($entry != "." && $entry != ".." && !is_dir("$dir/$entry")) {
                   // Store the directory of file relative to main module.
@@ -222,13 +223,13 @@ class IformCustomFormsList {
             'js' => [],
             'css' => [
               'base' => [],
-            ]
+            ],
           ];
 
           // Prebuilt form specific CSS.
           $file = "$form.css";
           if (array_key_exists($file, self::$customisations['css'])) {
-            $relPath= self::$customisations['css'][$file];
+            $relPath = self::$customisations['css'][$file];
             $libraries[$lib]['css']['base']["$relPath/$file"] = [];
           }
 
@@ -246,11 +247,38 @@ class IformCustomFormsList {
             $libraries[$lib]['js']["$relPath/$file"] = [];
           }
 
-          // Node specific JS
+          // Node specific JS.
           $file = "node.$nid.js";
           if (array_key_exists($file, self::$customisations['js'])) {
             $relPath = self::$customisations['js'][$file];
             $libraries[$lib]['js']["$relPath/$file"] = [];
+          }
+
+          // Extension classes can be referred to in the form structure
+          // parameter of any page and can contain JS or CSS code in addition to
+          // the PHP class.
+          if (!empty($node->params['structure'])) {
+            // Look for all [extClass.extFunction] in the form structure.
+            $pattern = '/\[[a-z_]+\.[a-z_]+\]/';
+            if (preg_match_all($pattern, $node->params['structure'], $extensions)) {
+              foreach ($extensions[0] as $extension) {
+                // Remove the [] from around $extension.
+                $extension = substr($extension, 1, -1);
+                list($extClass, $extFunction) = explode('.', $extension);
+                // Look for js files for each extension.
+                $file = "$extClass.js";
+                if (array_key_exists($file, self::$customisations['extensions'])) {
+                  $relPath = self::$customisations['extensions'][$file];
+                  $libraries[$lib]['js']["$relPath/$file"] = [];
+                }
+                // Look for css files for each extension.
+                $file = "$extClass.css";
+                if (array_key_exists($file, self::$customisations['extensions'])) {
+                  $relPath = self::$customisations['extensions'][$file];
+                  $libraries[$lib]['css']['base']["$relPath/$file"] = [];
+                }
+              }
+            }
           }
 
           // Skip any unnecessary empty libraries.
@@ -274,10 +302,12 @@ class IformCustomFormsList {
   }
 
   /**
-   * Autoloader for forms in submodules.
+   * Autoloader for forms and extensions in submodules.
    *
-   * The following naming convention exists for Indicia client_helpers:
+   * The following naming convention exists for Indicia custom forms:
    * a file, "$formName.php", contains a class "iform_$formName".
+   * For extensions:
+   * a file, "$extName.php", contains a class "extension_$extName".
    */
   protected function autoloader($className) {
     // Check the class is a candidate for an iform custom form.
@@ -289,6 +319,19 @@ class IformCustomFormsList {
         // Construct the absolute path to the file.
         $path = self::$absoluteModulePath .
                 '/' . self::$customisations['.'][$fileName] .
+                '/' . $fileName;
+        require $path;
+      }
+    }
+    // Or a custom extension.
+    elseif (substr($className, 0, 10) === 'extension_') {
+      $extName = substr($className, 10);
+      $fileName = "$extName.php";
+      // Check the class file exists in the extension customisations.
+      if (array_key_exists($fileName, self::$customisations['extensions'])) {
+        // Construct the absolute path to the file.
+        $path = self::$absoluteModulePath .
+                '/' . self::$customisations['extensions'][$fileName] .
                 '/' . $fileName;
         require $path;
       }
