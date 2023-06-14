@@ -198,12 +198,16 @@ class IformCustomFormsList {
    */
   protected function createLibrariesList() {
     if (!isset(self::$libraries)) {
-      // Try to retrieve list from cache.
-      $cached = $this->cache->get('iform_custom_forms_list_libraries');
-      if ($cached) {
+      if (!self::$customisations) {
+        // If there are no customisations then the libraries list is empty.
+        self::$libraries = [];
+      }
+      elseif ($cached = $this->cache->get('iform_custom_forms_list_libraries')) {
+        // Use list from cache.
         self::$libraries = $cached->data;
       }
       else {
+        // Build the list.
         // Load all the nodes of type iform_page.
         $query = $this->entityTypeManager->getStorage('node')->getQuery();
         $nids = $query
@@ -310,6 +314,11 @@ class IformCustomFormsList {
    * a file, "$extName.php", contains a class "extension_$extName".
    */
   protected function autoloader($className) {
+    // Return early if we have no customisations.
+    if (!self::$customisations) {
+      return;
+    }
+
     // Check the class is a candidate for an iform custom form.
     if (substr($className, 0, 6) === 'iform_') {
       $formName = substr($className, 6);
